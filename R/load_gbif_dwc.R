@@ -26,7 +26,7 @@
 #' 
 #' @examples
 #' \dontrun{
-#' data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "/tmp", settings_file = "settings.R")
+#' data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "/tmp")
 #' }
 
 
@@ -40,11 +40,27 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, settings_file = NA, pgdrive
     stop("zipfile not found")
   }
   
-  if (is.na(settings_file)){
-    stop("settings_file not set")
-  }
+  settings_file = "gde_settings.R"
   
   if (file.exists(settings_file) == FALSE){
+    cat(" ERROR: Could not find the file with the settings. Save \n a file \"gde_settings.R\" in the working directory with \nthis information:
+            
+##########
+  # Database
+  #  options are 'postgresql' (recommended) or 'sqlite'
+  db_server <- \"postgresql\"
+    
+  #SQLite options
+  database_file <- \"gbif.sqlite3\"
+    
+  #PostgreSQL options
+  pg_host <- \"\"
+  pg_user <- \"\"
+  pg_database <- \"\"
+  pg_password <- \"\"
+  
+  app_name <- \"\"
+##########")
     stop("settings_file not found")
   }
   

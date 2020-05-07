@@ -1,0 +1,17 @@
+# Database
+#  options are 'postgresql' (recommended) or 'sqlite'
+db_server <- "postgresql"
+
+
+#SQLite options
+database_file <- ""
+
+
+#PostgreSQL options
+pg_host <- ""
+pg_user <- ""
+pg_database <- ""
+pg_password <- ""
+
+
+#app_name <- ""

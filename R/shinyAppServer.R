@@ -42,7 +42,7 @@ shinyAppServer <- function(input, output, session) {
 #   library("shinycssloaders")
   
   #Import settings----
-  source(settings_file)
+  source("gde_settings.R")
   
   if (db_server == "postgresql"){
     if (is.na(pgdriver)){

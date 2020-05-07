@@ -9,11 +9,22 @@
 
 
 
+#Import settings----
+if (file.exists(settings_file)){
+  source("gde_settings.R")
+}
+
+if (!exists(app_name)){
+  app_name_title <- "GBIF Dataset Explorer"
+}else{
+  app_name_title <- app_name
+}
+
 
 # create the shiny application user interface
 # UI ----
 shinyAppUI <- fluidPage(
-  navbarPage("GBIF Explorer",
+  navbarPage(,
              # Tab:Summary ----
              tabPanel("Summary", 
                       fluidRow(
