@@ -1,0 +1,18 @@
+Package: BADE
+Title: Biodiversity Aggregators Dataset Explorer
+Version: 0.1
+Date: 2020-05-07
+Authors@R: c(person("Luis J", "Villanueva", email = "villanueval@si.edu",
+                  role = c("aut", "cre"))
+                  )
+Maintainer: Luis J. Villanueva-Rivera <villanueval@si.edu>
+Description: Functions to explore datasets from biodivesity aggregators (e.g. GBIF, iDigbio).
+Encoding: UTF-8
+Imports: dplyr, stringr, DT, XML, data.table, R.utils, readr, jsonlite, plotly, progress, rgbif, httr, shinyWidgets, shinycssloaders
+Depends: R(>= 3.2.0), DBI, leaflet, shiny, ggplot2, odbc
+Suggests: knitr
+License: file LICENSE
+URL: https://github.com/Smithsonian/BADE
+BugReports: https://github.com/Smithsonian/BADE/issues
+VignetteBuilder: knitr
+RoxygenNote: 7.1.0
