@@ -4,14 +4,12 @@
 \alias{load_gbif_dwc}
 \title{Open GBIF download from zip file}
 \usage{
-load_gbif_dwc(zipfile = NA, tmpdir = NA, settings_file = NA, pgdriver = NA)
+load_gbif_dwc(zipfile = NA, tmpdir = NA, pgdriver = NA)
 }
 \arguments{
 \item{zipfile}{Path to the zipfile}
 
 \item{tmpdir}{Temporary path for extracted files}
-
-\item{settings_file}{Path to the file with the database settings}
 
 \item{pgdriver}{ODBC driver for the Postgres database. If not set, the function will try some options.}
 }
@@ -20,6 +18,6 @@ Function that loads the data in a zip file downloaded from GBIF
 }
 \examples{
 \dontrun{
-data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "/tmp", settings_file = "settings.R")
+data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "/tmp")
 }
 }

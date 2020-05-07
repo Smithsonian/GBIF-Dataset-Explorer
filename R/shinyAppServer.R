@@ -8,10 +8,6 @@
 #' @import leaflet
 #' @import ggplot2
 #' @import shiny
-# @importFrom DT dataTableProxy
-# @importFrom DT replaceData
-# @importFrom DT datatable
-# @importFrom DT renderDataTable
 #' @importFrom rgbif gbif_issues
 #' @importFrom odbc odbc
 #' @importFrom dplyr filter
@@ -24,23 +20,7 @@
 # Define server logic of the app
 # Based on https://github.com/MangoTheCat/shinyAppDemo/
 shinyAppServer <- function(input, output, session) {
-# 
-#   # Load/install packages ----
-#   library("shiny")
-#   library("DT")
-#   library("dplyr")
-#   library("plotly")
-#   library("stringr")
-#   library("leaflet")
-#   library("XML")
-#   library("curl")
-#   library("data.table")
-#   #library("jsonlite")
-#   #library("R.utils")
-#   library("ggplot2")
-#   library("shinyWidgets")
-#   library("shinycssloaders")
-  
+
   #Import settings----
   source("gde_settings.R")
   

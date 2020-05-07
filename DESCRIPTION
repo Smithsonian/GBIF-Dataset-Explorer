@@ -6,13 +6,13 @@ Authors@R: c(person("Luis J", "Villanueva", email = "villanueval@si.edu",
                   role = c("aut", "cre"))
                   )
 Maintainer: Luis J. Villanueva-Rivera <villanueval@si.edu>
-Description: Functions to explore datasets from biodivesity aggregators (e.g. GBIF, iDigbio).
+Description: Functions to explore datasets from the biodivesity aggregator GBIF.
 Encoding: UTF-8
 Imports: dplyr, stringr, DT, XML, data.table, R.utils, readr, jsonlite, plotly, progress, rgbif, httr, shinyWidgets, shinycssloaders
 Depends: R(>= 3.2.0), DBI, leaflet, shiny, ggplot2, odbc
 Suggests: knitr
 License: file LICENSE
-URL: https://github.com/Smithsonian/BADE
-BugReports: https://github.com/Smithsonian/BADE/issues
+URL: https://github.com/Smithsonian/gde
+BugReports: https://github.com/Smithsonian/gde/issues
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0

@@ -3,7 +3,6 @@
 #' Function that loads the data in a zip file downloaded from GBIF
 #'
 #' @param zipfile Path to the zipfile
-#' @param settings_file Path to the file with the database settings
 #' @param tmpdir Temporary path for extracted files
 #' @param pgdriver ODBC driver for the Postgres database. If not set, the function will try some options.
 #'
@@ -30,7 +29,7 @@
 #' }
 
 
-load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, settings_file = NA, pgdriver = NA){
+load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   
   if (is.na(zipfile) || file.exists(zipfile) == FALSE){
     stop("zipfile was not set")
@@ -40,9 +39,7 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, settings_file = NA, pgdrive
     stop("zipfile not found")
   }
   
-  settings_file = "gde_settings.R"
-  
-  if (file.exists(settings_file) == FALSE){
+  if (file.exists("gde_settings.R") == FALSE){
     cat(" ERROR: Could not find the file with the settings. Save \n a file \"gde_settings.R\" in the working directory with \nthis information:
             
 ##########
@@ -73,7 +70,7 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, settings_file = NA, pgdrive
   }
   
   #Import settings----
-  source(settings_file)
+  source("gde_settings.R")
   
   if (db_server == "postgresql"){
     if (is.na(pgdriver)){
