@@ -1,4 +1,4 @@
-# gde
+# GBIF-Dataset-Explorer (gde)
 
 R Package to explore datasets from the biodivesity aggregator GBIF.
 
