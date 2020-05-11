@@ -1,5 +1,5 @@
 # Database
-#  options are 'postgresql' (recommended) or 'sqlite'
+#  options are 'postgresql' (recommended) or 'sqlite' (not yet implemented)
 db_server <- "postgresql"
 
 
@@ -14,4 +14,5 @@ pg_database <- ""
 pg_password <- ""
 
 
-#app_name <- ""
+#Name of the app
+app_name <- "GBIF Dataset Explorer"

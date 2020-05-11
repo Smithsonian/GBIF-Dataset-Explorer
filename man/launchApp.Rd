@@ -2,7 +2,7 @@
 % Please edit documentation in R/launchApp.R
 \name{launchApp}
 \alias{launchApp}
-\title{launches the BADE app}
+\title{launches the GDE app}
 \usage{
 launchApp()
 }
@@ -10,5 +10,5 @@ launchApp()
 shiny application object
 }
 \description{
-launches the BADE app
+launches the GDE app
 }

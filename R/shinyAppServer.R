@@ -24,8 +24,10 @@ shinyAppServer <- function(input, output, session) {
   #Import settings----
   source("gde_settings.R")
   
+  output$app_title <- renderText({app_name})
+  
   if (db_server == "postgresql"){
-    if (is.na(pgdriver)){
+    if (!exists("pgdriver")){
       gbif_db <- try(DBI::dbConnect(odbc::odbc(),
                                driver = "PostgreSQL",
                                database = pg_database,
@@ -55,7 +57,7 @@ shinyAppServer <- function(input, output, session) {
       }
     }else{
       gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                               driver = "PostgreSQL Unicode",
+                               driver = pgdriver,
                                database = pg_database,
                                uid = pg_user,
                                pwd = pg_password,
@@ -120,11 +122,11 @@ shinyAppServer <- function(input, output, session) {
   
   #distinct_issues pulldown ----
   output$distinct_issues <- renderUI({
-    selectInput(inputId = "i",
+      selectInput(inputId = "i",
                 label = "Select an issue:", 
                 choices = distinct_issues,
                 width = 360
-    )
+      )
   })
   
   
@@ -175,6 +177,18 @@ shinyAppServer <- function(input, output, session) {
   })
   
   
+  output$pagetitle <- renderUI({
+    if (app_name != ""){
+      app_name_title <- app_name
+    }else{
+      app_name_title <- "GBIF Dataset Explorer"
+      }
+  HTML(paste0('<script type="text/javascript">
+                           top.document.title=\'', app_name_title, '\'
+                           </script>'))
+                           })
+                           
+  
   output$table <- DT::renderDataTable({
     req(input$i)
     DT::datatable(datarows(), 
@@ -190,7 +204,7 @@ shinyAppServer <- function(input, output, session) {
   
   
   
-  output$download_doi <- renderText({
+  output$download_doi <- renderUI({
     metadata_string <- DBI::dbGetQuery(gbif_db, paste0("SELECT metadata_json::text FROM bade_gbif_metadata"))
     gbif_metadata <- jsonlite::fromJSON(metadata_string$metadata_json)
     gbif_metadata_json <- jsonlite::prettify(metadata_string$metadata_json)
@@ -239,7 +253,12 @@ shinyAppServer <- function(input, output, session) {
     
     html_to_print <- paste0(html_to_print, "</div></div></div>")
     
-    HTML(html_to_print)
+    tagList(
+      HTML(html_to_print)#,
+      # HTML(paste0("<script type=\"text/javascript\">
+      #                      document.getElementsByClassName(\"navbar-brand\")[0].innerHTML = ", app_name, ";
+      #               </script>"))
+    )
   })
   
   
@@ -402,18 +421,6 @@ shinyAppServer <- function(input, output, session) {
       HTML("</div></div>")
     )
   })
-  
-  # 
-  # # Print issue description ----
-  # output$issuedescript <- renderText({
-  #   req(input$i)
-  #   
-  #   if (input$i != "None"){
-  #     this_issue <- dplyr::filter(gbifissues, issue == input$i)
-  #     paste0("Description: ", this_issue$description)
-  #   }
-  # })
-  # 
   
   
   # Downloadable csv of selected issue ----
@@ -591,14 +598,10 @@ shinyAppServer <- function(input, output, session) {
     }
     
     names(summary_vals) <- c("issue", "description", "no_records")
-    #summary_vals$no_records <- paste(summary_vals$no_records)
-    
+
     #Remove underscores from issue names
     summary_vals$issue <- gsub("_", " ", summary_vals$issue)
-    
-    # Close db
-    #dbDisconnect(gbif_db)
-    
+
     names(summary_vals) <- c("Issue", "Description", "No. records")
     
     DT::datatable(summary_vals, 
@@ -612,7 +615,7 @@ shinyAppServer <- function(input, output, session) {
                   ), 
                   rownames = FALSE, 
                   selection = 'none') %>% 
-      formatCurrency('No. records', currency = "", interval = 3, mark = ",", digits = 0)
+      DT::formatCurrency('No. records', currency = "", interval = 3, mark = ",", digits = 0)
   })
   
   
@@ -638,7 +641,6 @@ shinyAppServer <- function(input, output, session) {
         fill = "No. of Records\nwith both\nIssues"#, 
         #title = "Fig. 2. Pairwise image of issues common to the records"
       )
-    
   })
   
   

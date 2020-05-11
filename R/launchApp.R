@@ -1,4 +1,4 @@
-#' launches the BADE app
+#' launches the GDE app
 #'
 #' @export launchApp
 #'
@@ -13,5 +13,6 @@
 
 # wrapper for shiny::shinyApp()
 launchApp <- function() {
+  
   shinyApp(ui = shinyAppUI, server = shinyAppServer)
 }

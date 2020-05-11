@@ -21,6 +21,7 @@
 #' @importFrom R.utils countLines
 #' @importFrom R.utils isDirectory
 #' @importFrom httr GET
+#' @importFrom httr content
 #' @importFrom data.table fread
 #' 
 #' @examples
@@ -142,7 +143,7 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   
   #Extract file in the command line
   cat("\n Extracting files from zip...\n  Please wait...\n")
-  system2("unzip", args = c("-f", "-d", tmpdir, zipfile))
+  system2("unzip", args = c("-u", "-o", "-d", tmpdir, zipfile))
   
   
   #Occurrence table----
@@ -364,7 +365,7 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   this_doi <- dl_meta_file$additionalMetadata$metadata$`gbif`$citation$.attrs
   gbif_key <- dl_meta_file$dataset$alternateIdentifier
   metadata_json <- paste0("http://api.gbif.org/v1/occurrence/download/", gbif_key)
-  gbif_metadata <- content(httr::GET(metadata_json), as="text", encoding = "UTF-8")
+  gbif_metadata <- httr::content(httr::GET(metadata_json), as="text", encoding = "UTF-8")
   
   n <- DBI::dbSendQuery(gbif_db, paste0("CREATE TABLE bade_gbif_metadata AS (SELECT '", gbif_metadata, "'::json AS metadata_json)"))
   dbClearResult(n)
@@ -376,4 +377,5 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   system2("rm", args = c(paste0(tmpdir, "/*.xml")))
   system2("rm", args = c("-r", paste0(tmpdir, "/dataset")))
   
+  cat("\n Done! The database is ready.\n\n")
 }

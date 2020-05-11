@@ -1,33 +1,22 @@
-#' Shiny app server object
+#' shinyAppServer
 #'
 #' @importFrom graphics hist
 #' @importFrom shinycssloaders withSpinner
-# @importFrom DT dataTableOutput
 #' @import shiny
 #' @import leaflet
 #' @import shinyWidgets
-
-
-
-#Import settings----
-source("gde_settings.R")
-
-if (!exists(app_name)){
-  app_name_title <- "GBIF Dataset Explorer"
-}else{
-  app_name_title <- app_name
-}
-
+#
 
 # create the shiny application user interface
 # UI ----
-shinyAppUI <- fluidPage(title = "GBIF Dataset Explorer",
-  navbarPage(app_name_title,
+shinyAppUI <- fluidPage(
+  navbarPage(title = textOutput("app_title"),
              # Tab:Summary ----
              tabPanel("Summary", 
                       fluidRow(
                         column(width = 6,
                                br(),
+                               uiOutput("pagetitle"),
                                h4("Fig. 1. Number of issues by record"),
                                plotOutput("summaryPlot3", height = 600),
                                br(),
@@ -38,6 +27,8 @@ shinyAppUI <- fluidPage(title = "GBIF Dataset Explorer",
                                br(),
                                h4("Table 1. Issues in the downloaded dataset and the number of records per issue"),
                                DT::dataTableOutput("summaryTable"),
+                               br(),
+                               hr(),
                                br(),
                                uiOutput("download_doi")
                         )
@@ -51,6 +42,7 @@ shinyAppUI <- fluidPage(title = "GBIF Dataset Explorer",
                                br(),
                                uiOutput("distinct_issues"),
                                uiOutput("downloadData"),
+                               
                                HTML('<script type="text/javascript">
                            $(document).ready(function() {
                              $("#downloadData").click(function() {
