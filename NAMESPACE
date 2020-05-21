@@ -2,6 +2,7 @@
 
 export(launchApp)
 export(load_gbif_dwc)
+export(load_idigbio)
 import(DBI)
 import(dplyr)
 import(ggplot2)

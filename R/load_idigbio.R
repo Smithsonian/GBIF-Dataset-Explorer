@@ -1,6 +1,6 @@
-#' Open GBIF download from zip file
+#' Load iDigbio download to the database
 #' 
-#' Function that loads the data in a zip file downloaded from GBIF
+#' Function that loads the data in a zip file downloaded from iDigbio
 #'
 #' @param zipfile Path to the zipfile
 #' @param tmpdir Temporary path for extracted files
@@ -30,7 +30,7 @@
 #' }
 
 
-load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
+load_idigbio <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   
   if (is.na(zipfile) || file.exists(zipfile) == FALSE){
     stop("zipfile was not set")
@@ -116,13 +116,13 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
     if (class(gbif_db) == "try-error"){
       stop("Could not connect to PostgreSQL.")
     }else{
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_occ;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_verbatim;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_multimedia;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_issues;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_datasets;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_issue_stats;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_metadata;")
+      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_idigbio_occ;")
+      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_idigbio_verbatim;")
+      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_idigbio_multimedia;")
+      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_idigbio_issues;")
+      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_idigbio_datasets;")
+      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_idigbio_issue_stats;")
+      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_idigbio_metadata;")
     }
   }else if (db_server == "sqlite"){
     # if (file.exists(database_file)){
@@ -134,11 +134,11 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
     stop("Incorrect db_server setting.")
   }
   
-  occ_file <- paste0(tmpdir, "/occurrence.txt")
-  ver_file <- paste0(tmpdir, "/verbatim.txt")
-  multi_file <- paste0(tmpdir, "/multimedia.txt")
-  dataset_xml_path <- paste0(tmpdir, "/dataset/")
-  metadata_path <- paste0(tmpdir, "/metadata.xml")
+  occ_file <- paste0(tmpdir, "/occurrence.csv")
+  ver_file <- paste0(tmpdir, "/occurrence_raw.csv")
+  multi_file <- paste0(tmpdir, "/multimedia.csv")
+  #dataset_xml_path <- paste0(tmpdir, "/dataset/")
+  metadata_path <- paste0(tmpdir, "/meta.xml")
 
   
   #Extract file in the command line
@@ -147,66 +147,71 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   
   
   #Occurrence table----
-  occ_cols <- data.table::fread(input = occ_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1)
-  occ_row1 <- data.table::fread(input = occ_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1, skip = 10)
+  occ_cols <- data.table::fread(input = occ_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "\"", nrows = 1)
+  occ_cols <- stringr::str_replace_all(occ_cols, ":", "_")
+  
+  occ_row1 <- data.table::fread(input = occ_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "\"", nrows = 1, skip = 10)
   gbif_cols_q <- paste0(occ_cols, collapse = " text, ")
-  gbif_cols_q <- tolower(stringr::str_replace(gbif_cols_q, "gbifID text", "gbifid TEXT PRIMARY KEY"))
+  gbif_cols_q <- tolower(stringr::str_replace(gbif_cols_q, "coreid text", "coreid TEXT PRIMARY KEY"))
   gbif_cols_q <- paste0(gbif_cols_q, " text, ignorerow BOOLEAN DEFAULT 'f'")
   #Replace sql keywords
-  gbif_cols_q <- stringr::str_replace(gbif_cols_q, ", group", ", \"group\"")
-  gbif_cols_q <- stringr::str_replace(gbif_cols_q, "island\"group\"", "islandgroup")
-  gbif_cols_q <- stringr::str_replace(gbif_cols_q, "order", "\"order\"")
-  gbif_cols_q <- stringr::str_replace(gbif_cols_q, "references", "\"references\"")
   
-  n <- DBI::dbExecute(gbif_db, paste0("CREATE TABLE bade_gbif_occ(", gbif_cols_q, ")"))
+  
+  n <- DBI::dbExecute(gbif_db, paste0("CREATE TABLE bade_idigbio_occ(", gbif_cols_q, ")"))
   
   #Verbatim table ----
-  ver_cols <- data.table::fread(input = ver_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1)
-  ver_row1 <- data.table::fread(input = ver_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1, skip = 10)
-  
-  ver_cols_q <- paste0(ver_cols, collapse = " text , ")
-  ver_cols_q <- tolower(stringr::str_replace(ver_cols_q, "gbifID text", "gbifid TEXT PRIMARY KEY"))
-  #Replace sql keywords
-  ver_cols_q <- stringr::str_replace(ver_cols_q, "references", "\"references\"")
-  ver_cols_q <- stringr::str_replace(ver_cols_q, ", group", ", \"group\"")
-  ver_cols_q <- stringr::str_replace(ver_cols_q, "island\"group\"", "islandgroup")
-  ver_cols_q <- stringr::str_replace(ver_cols_q, "order", "\"order\"")
-  
-  n <- DBI::dbExecute(gbif_db, paste0("CREATE TABLE bade_gbif_verbatim(", ver_cols_q, " text)"))
+  #Skip for now
+  # ver_cols <- data.table::fread(input = ver_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1)
+  # ver_row1 <- data.table::fread(input = ver_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1, skip = 10)
+  # 
+  # ver_cols_q <- paste0(ver_cols, collapse = " text , ")
+  # ver_cols_q <- tolower(stringr::str_replace(ver_cols_q, "coreid text", "coreid TEXT PRIMARY KEY"))
+  # 
+  # ver_cols_q <- stringr::str_replace_all(ver_cols_q, ":", "_")
+  # 
+  # #Replace sql keywords
+  # # ver_cols_q <- stringr::str_replace(ver_cols_q, "references", "\"references\"")
+  # # ver_cols_q <- stringr::str_replace(ver_cols_q, ", group", ", \"group\"")
+  # # ver_cols_q <- stringr::str_replace(ver_cols_q, "island\"group\"", "islandgroup")
+  # # ver_cols_q <- stringr::str_replace(ver_cols_q, "order", "\"order\"")
+  # 
+  # n <- DBI::dbExecute(gbif_db, paste0("CREATE TABLE bade_idigbio_verbatim(", ver_cols_q, " text)"))
   
   
   #multimedia table ----
-  mm_cols <- data.table::fread(input = multi_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1)
-  mm_row1 <- data.table::fread(input = multi_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1, skip = 10)
+  mm_cols <- data.table::fread(input = multi_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "\"", nrows = 1)
+  mm_row1 <- data.table::fread(input = multi_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "\"", nrows = 1, skip = 10)
   
   mm_cols_q <- paste0(mm_cols, collapse = " text, ")
-  mm_cols_q <- tolower(stringr::str_replace(mm_cols_q, "gbifID text", "gbifid TEXT PRIMARY KEY"))
-  #Replace sql keywords
-  mm_cols_q <- stringr::str_replace(mm_cols_q, "references", "\"references\"")
+  mm_cols_q <- tolower(stringr::str_replace(mm_cols_q, "coreid text", "coreid TEXT PRIMARY KEY"))
   
-  n <- DBI::dbExecute(gbif_db, paste0("CREATE TABLE bade_gbif_multimedia(", mm_cols_q, " text)"))
+  mm_cols_q <- stringr::str_replace_all(mm_cols_q, ":", "_")
+  #Replace sql keywords
+  #mm_cols_q <- stringr::str_replace(mm_cols_q, "references", "\"references\"")
+  
+  n <- DBI::dbExecute(gbif_db, paste0("CREATE TABLE bade_idigbio_multimedia(", mm_cols_q, " text)"))
   
   
   #Datasets table ----
-  datasets_xml <- list.files(dataset_xml_path, pattern = "*.xml", full.names = TRUE)
-  no_datasets <- length(datasets_xml)
+  #datasets_xml <- list.files(dataset_xml_path, pattern = "*.xml", full.names = TRUE)
+  #no_datasets <- length(datasets_xml)
   
-  n <- DBI::dbExecute(gbif_db, 'CREATE TABLE bade_gbif_datasets(datasetKey text PRIMARY KEY, title text, institution text);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX ds_datasetKey ON bade_gbif_datasets(datasetKey);')
+  #n <- DBI::dbExecute(gbif_db, 'CREATE TABLE bade_idigbio_datasets(datasetKey text PRIMARY KEY, title text, institution text);')
+  #n <- DBI::dbExecute(gbif_db, 'CREATE INDEX ds_datasetKey ON bade_idigbio_datasets(datasetKey);')
   
-  pb <- progress::progress_bar$new(
-    format = " Loading datasets [:bar] :percent in :elapsed",
-    total = no_datasets, clear = FALSE, width= 100)
-  
-  for (i in 1:no_datasets){
-    pb$tick()
-    meta_file <- XML::xmlToList(datasets_xml[i])
-    datasetKey <- stringr::str_replace(basename(datasets_xml[i]), ".xml", "")
-    datasetTitle <- stringr::str_replace_all(meta_file$dataset$title, "'", "''")
-    datasetInst <- stringr::str_replace_all(meta_file$dataset$creator$organizationName, "'", "''")
-    insert_query <- paste0("INSERT INTO bade_gbif_datasets (datasetKey, title, institution) VALUES ('", datasetKey, "', '", datasetTitle, "', '", datasetInst, "');")
-    n <- DBI::dbExecute(gbif_db, insert_query)
-  }
+  # pb <- progress::progress_bar$new(
+  #   format = " Loading datasets [:bar] :percent in :elapsed",
+  #   total = no_datasets, clear = FALSE, width= 100)
+  # 
+  # for (i in 1:no_datasets){
+  #   pb$tick()
+  #   meta_file <- XML::xmlToList(datasets_xml[i])
+  #   datasetKey <- stringr::str_replace(basename(datasets_xml[i]), ".xml", "")
+  #   datasetTitle <- stringr::str_replace_all(meta_file$dataset$title, "'", "''")
+  #   datasetInst <- stringr::str_replace_all(meta_file$dataset$creator$organizationName, "'", "''")
+  #   insert_query <- paste0("INSERT INTO bade_idigbio_datasets (datasetKey, title, institution) VALUES ('", datasetKey, "', '", datasetTitle, "', '", datasetInst, "');")
+  #   n <- DBI::dbExecute(gbif_db, insert_query)
+  # }
   
   
   #how big?
@@ -231,46 +236,45 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
     #print(paste0("Loading data... (", i, " of ", no_steps, " steps)"))
     
     if (i == 1){
-      gbif_data <- data.table::fread(input = occ_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = (no_rows - 1), skip = 1, colClasses = "character")
-      verbatim_data <- data.table::fread(input = ver_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = (no_rows - 1), skip = 1, colClasses = "character")
+      gbif_data <- data.table::fread(input = occ_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "\"", nrows = (no_rows - 1), skip = 1, colClasses = "character")
+      #verbatim_data <- data.table::fread(input = ver_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = (no_rows - 1), skip = 1, colClasses = "character")
     }else{
       skip_rows <- i * no_rows
-      gbif_data <- data.table::fread(input = occ_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = no_rows, skip = skip_rows, colClasses = "character")
-      verbatim_data <- data.table::fread(input = ver_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = no_rows, skip = skip_rows, colClasses = "character")
+      gbif_data <- data.table::fread(input = occ_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "\"", nrows = no_rows, skip = skip_rows, colClasses = "character")
+      #verbatim_data <- data.table::fread(input = ver_file, header = FALSE, sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = no_rows, skip = skip_rows, colClasses = "character")
     }
     
     
-    while (dim(gbif_data)[2] != dim(occ_cols)[2]){
+    while (dim(gbif_data)[2] != length(occ_cols)){
       gbif_data <- cbind(gbif_data, NA)
     }
     
     names(gbif_data) <- tolower(unlist(occ_cols))
-    
-    names(verbatim_data) <- tolower(unlist(ver_cols))
+    #names(verbatim_data) <- tolower(unlist(ver_cols))
     
     #write rows
-    DBI::dbWriteTable(gbif_db, "bade_gbif_occ", gbif_data, append = TRUE)
-    DBI::dbWriteTable(gbif_db, "bade_gbif_verbatim", verbatim_data, append = TRUE)
+    DBI::dbWriteTable(gbif_db, "bade_idigbio_occ", gbif_data, append = TRUE)
+    #DBI::dbWriteTable(gbif_db, "bade_idigbio_verbatim", verbatim_data, append = TRUE)
   }
   
   rm(gbif_data)
   rm(verbatim_data)
   
   #Indices
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX gbifID ON bade_gbif_occ(gbifID);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX issue ON bade_gbif_occ(issue);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX gb_datasetKey ON bade_gbif_occ(datasetID);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX basisOfRecord ON bade_gbif_occ(basisOfRecord);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX scientificName ON bade_gbif_occ(scientificName);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX ignorerow ON bade_gbif_occ(ignorerow);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX verbatim_gbifID ON bade_gbif_verbatim(gbifID);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX multimedia_gbifID ON bade_gbif_multimedia(gbifID);')
+  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX bade_idigbio_core_idx ON bade_idigbio_occ(coreid);')
+  #n <- DBI::dbExecute(gbif_db, 'CREATE INDEX bade_idigbio_issue_idx ON bade_idigbio_occ(issue);')
+  #n <- DBI::dbExecute(gbif_db, 'CREATE INDEX gb_datasetKey ON bade_idigbio_occ(datasetID);')
+  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX bade_idigbio_basisOfRecord_idx ON bade_idigbio_occ(dwc_basisofrecord);')
+  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX bade_idigbio_scientificName_idx ON bade_idigbio_occ(dwc_scientificname);')
+  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX bade_idigbio_ignorerow ON bade_idigbio_occ(ignorerow);')
+  #n <- DBI::dbExecute(gbif_db, 'CREATE INDEX verbatim_gbifID ON bade_idigbio_verbatim(gbifID);')
+  #n <- DBI::dbExecute(gbif_db, 'CREATE INDEX multimedia_gbifID ON bade_idigbio_multimedia(gbifID);')
   
   
   cat("\n Cataloging issues...")
   
-  n <- DBI::dbGetQuery(gbif_db, "CREATE TABLE bade_gbif_issues(id serial PRIMARY KEY, gbifID text, issue text);")
-  issue_list <- DBI::dbGetQuery(gbif_db, "SELECT DISTINCT issue FROM bade_gbif_occ WHERE issue != ''")
+  n <- DBI::dbGetQuery(gbif_db, "CREATE TABLE bade_idigbio_issues(id serial PRIMARY KEY, coreid text, issue text);")
+  issue_list <- DBI::dbGetQuery(gbif_db, "SELECT DISTINCT idigbio_flags FROM bade_idigbio_occ WHERE idigbio_flags != ''")
   
   issues_list <- data.frame(matrix(ncol = 1, nrow = 0, data = NA))
   for (i in 1:dim(issue_list)[1]){
@@ -288,11 +292,11 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   
   for (i in 1:length(distinct_issues)) {
     pb$tick()
-    DBI::dbExecute(gbif_db, paste0("INSERT INTO bade_gbif_issues (gbifID, issue) SELECT gbifid, '", distinct_issues[i], "' FROM bade_gbif_occ WHERE issue LIKE '%", distinct_issues[i], "%'"))
+    DBI::dbExecute(gbif_db, paste0("INSERT INTO bade_idigbio_issues (gbifID, issue) SELECT gbifid, '", distinct_issues[i], "' FROM bade_idigbio_occ WHERE issue LIKE '%", distinct_issues[i], "%'"))
   }
   
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX issue_issue ON bade_gbif_issues(issue);')
-  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX gbifID_issue ON bade_gbif_issues(gbifid);')
+  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX issue_issue ON bade_idigbio_issues(issue);')
+  n <- DBI::dbExecute(gbif_db, 'CREATE INDEX gbifID_issue ON bade_idigbio_issues(gbifid);')
   
   fields <- c(tolower(unlist(occ_cols)))
   
@@ -314,22 +318,22 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
     this_field <- stringr::str_replace(this_field, fixed("identification\"references\""), "identificationreferences")
     this_field <- stringr::str_replace(this_field, fixed("\"order\"key"), "orderkey")
     
-    n <- DBI::dbSendQuery(gbif_db, paste0("CREATE INDEX IF NOT EXISTS bade_gbif_occ_", fields[f], "_idx ON bade_gbif_occ(", this_field, ")"))
+    n <- DBI::dbSendQuery(gbif_db, paste0("CREATE INDEX IF NOT EXISTS bade_idigbio_occ_", fields[f], "_idx ON bade_idigbio_occ(", this_field, ")"))
     dbClearResult(n)
   }
   
   
   
   #Field statistics----
-  n <- DBI::dbSendQuery(gbif_db, "CREATE TABLE bade_gbif_issue_stats (field_name text, not_null_vals text, no_rows_distinct text)")
+  n <- DBI::dbSendQuery(gbif_db, "CREATE TABLE bade_idigbio_issue_stats (field_name text, not_null_vals text, no_rows_distinct text)")
   dbClearResult(n)
   
-  fields <- DBI::dbGetQuery(gbif_db, "SELECT COLUMN_NAME as name FROM information_schema.COLUMNS WHERE TABLE_NAME = 'bade_gbif_occ';")
+  fields <- DBI::dbGetQuery(gbif_db, "SELECT COLUMN_NAME as name FROM information_schema.COLUMNS WHERE TABLE_NAME = 'bade_idigbio_occ';")
   
   fields <- dplyr::filter(fields, name != 'ignorerow')
   fields <- dplyr::filter(fields, name != 'gbifid')
   
-  no_rows_total <- DBI::dbGetQuery(gbif_db, "SELECT count(*)::integer from bade_gbif_occ")
+  no_rows_total <- DBI::dbGetQuery(gbif_db, "SELECT count(*)::integer from bade_idigbio_occ")
   
   pb <- progress::progress_bar$new(
     format = " Calculating field statistics... [:bar] :percent eta: :eta",
@@ -344,7 +348,7 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
       this_field <- paste0('"', this_field, '"')
     }
     
-    no_rows_null_q <- paste0("SELECT count(*)::integer as no_rows from bade_gbif_occ WHERE ", this_field, " IS NULL OR ", this_field, " = ''")
+    no_rows_null_q <- paste0("SELECT count(*)::integer as no_rows from bade_idigbio_occ WHERE ", this_field, " IS NULL OR ", this_field, " = ''")
     no_rows_null <- DBI::dbGetQuery(gbif_db, no_rows_null_q)
 
     no_rows_notnull_pc1 <- round(((no_rows_total - no_rows_null)/no_rows_total) * 100, 2)
@@ -352,9 +356,9 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
     
     not_null <- paste0("<div class=\"progress\" style=\"background-color: #ffc107;\"><div class=\"progress-bar bg-success\" role=\"progressbar\" style=\"width: ", no_rows_notnull_pc1, "%; background-color: #28a745;\" aria-valuenow=\"", no_rows_notnull_pc1, "\" aria-valuemin=\"0\" aria-valuemax=\"100\" title=\"", no_rows_notnull_pc1, "\">", no_rows_notnull_pc1, "%</div></div>")
     
-    no_rows_distinct <- DBI::dbGetQuery(gbif_db, paste0("SELECT count(DISTINCT ", this_field, ")::integer as distinct_vals from bade_gbif_occ"))
+    no_rows_distinct <- DBI::dbGetQuery(gbif_db, paste0("SELECT count(DISTINCT ", this_field, ")::integer as distinct_vals from bade_idigbio_occ"))
     
-    n <- DBI::dbSendQuery(gbif_db, paste0("INSERT INTO bade_gbif_issue_stats (field_name, not_null_vals, no_rows_distinct) VALUES ('", this_field, "', '", not_null, "', '", no_rows_distinct, "')"))
+    n <- DBI::dbSendQuery(gbif_db, paste0("INSERT INTO bade_idigbio_issue_stats (field_name, not_null_vals, no_rows_distinct) VALUES ('", this_field, "', '", not_null, "', '", no_rows_distinct, "')"))
     dbClearResult(n)
   }
   
@@ -367,7 +371,7 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   metadata_json <- paste0("http://api.gbif.org/v1/occurrence/download/", gbif_key)
   gbif_metadata <- httr::content(httr::GET(metadata_json), as="text", encoding = "UTF-8")
   
-  n <- DBI::dbSendQuery(gbif_db, paste0("CREATE TABLE bade_gbif_metadata AS (SELECT '", gbif_metadata, "'::json AS metadata_json)"))
+  n <- DBI::dbSendQuery(gbif_db, paste0("CREATE TABLE bade_idigbio_metadata AS (SELECT '", gbif_metadata, "'::json AS metadata_json)"))
   dbClearResult(n)
   
   DBI::dbDisconnect(gbif_db)
