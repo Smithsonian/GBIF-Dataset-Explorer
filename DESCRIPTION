@@ -1,7 +1,7 @@
 Package: gde
 Title: GBIF Dataset Explorer
-Version: 0.1
-Date: 2020-05-07
+Version: 0.1.2
+Date: 2020-08-24
 Authors@R: c(person("Luis J", "Villanueva", email = "villanueval@si.edu",
                   role = c("aut", "cre"))
                   )
@@ -12,7 +12,7 @@ Imports: dplyr, stringr, DT, XML, data.table, R.utils, readr, jsonlite, plotly, 
 Depends: R(>= 3.2.0), DBI, leaflet, shiny, ggplot2, odbc
 Suggests: knitr
 License: file LICENSE
-URL: https://github.com/Smithsonian/gde
-BugReports: https://github.com/Smithsonian/gde/issues
+URL: https://github.com/Smithsonian/GBIF-Dataset-Explorer
+BugReports: https://github.com/Smithsonian/GBIF-Dataset-Explorer/issues
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0

@@ -12,6 +12,7 @@
 #' @import readr
 #' @import odbc
 #' @import DBI
+#' @import ridigbio
 #' @importFrom jsonlite fromJSON
 #' @importFrom stringr fixed
 #' @importFrom jsonlite prettify

@@ -296,15 +296,22 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   
   fields <- c(tolower(unlist(occ_cols)))
   
-  fields <- fields[-which(fields == "gbifid")]
+  #fields <- fields[-which(fields == "gbifid")]
   
   pb <- progress::progress_bar$new(
     format = " Generating field indices... [:bar] :percent eta: :eta",
     total = length(fields), clear = FALSE, width = 100)
   
+  #Columns to skip
+  skip_cols <- c("occurrenceremarks", "gbifid")
+  
   for (f in seq(1, length(fields))){
     pb$tick()
-
+    
+    if (fields[f] %in% skip_cols){
+      next
+    }
+    
     this_field <- stringr::str_replace(fields[f], fixed("group"), "\"group\"")
     this_field <- stringr::str_replace(this_field, "island\"group\"", "islandgroup")
     this_field <- stringr::str_replace(this_field, "order", "\"order\"")

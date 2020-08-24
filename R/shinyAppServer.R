@@ -757,7 +757,7 @@ shinyAppServer <- function(input, output, session) {
   })
   
   
-  # fields_table ----
+  # precision_note ----
   output$precision_note <- renderUI({
     
     req(input$fields_table_rows_selected)
