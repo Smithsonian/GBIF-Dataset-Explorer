@@ -219,7 +219,7 @@ shinyAppServer <- function(input, output, session) {
         html_to_print <- paste0(html_to_print, "<dd><a href=\"", gbif_metadata[i], "\" target = _blank>", gbif_metadata[i], "</a></dd>")
       }else if(names(gbif_metadata[i]) == "size"){
         #from https://stackoverflow.com/questions/29787452/how-do-i-quickly-convert-the-size-element-of-file-info-from-bytes-to-kb-mb-g#comment48096201_29787527
-        filesize <- structure(as.integer(gbif_metadata[i]), class="object_size") 
+        filesize <- structure(as.numeric(gbif_metadata[i]), class="object_size") 
         html_to_print <- paste0(html_to_print, "<dd>", format(filesize, units="auto"), "</dd>")
       }else if(names(gbif_metadata[i]) == "totalRecords" || names(gbif_metadata[i]) == "numberDatasets"){
         html_to_print <- paste0(html_to_print, "<dd>", prettyNum(gbif_metadata[i], big.mark = ",", scientific = FALSE), "</dd>")
