@@ -159,9 +159,7 @@ shinyAppServer <- function(input, output, session) {
     }
     
     
-    
-    
-    query <- paste0("SELECT ", cols, " FROM bade_gbif_verbatim WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and gbifid NOT IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 't')")
+    query <- paste0("SELECT ", cols, " FROM bade_gbif_verbatim WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and gbifid NOT IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 't') ORDER BY gbifid")
     #print(query)
     datarows <- DBI::dbGetQuery(gbif_db, query)
     
@@ -269,12 +267,12 @@ shinyAppServer <- function(input, output, session) {
     req(input$table_rows_selected)
     
     if (input$i == "None"){
-      this_summary_ids <- DBI::dbGetQuery(gbif_db, "SELECT gbifid FROM bade_gbif_occ WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) and ignorerow = 'f'")
+      this_summary_ids <- DBI::dbGetQuery(gbif_db, "SELECT gbifid FROM bade_gbif_occ WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) and ignorerow = 'f' ORDER BY gbifid")
     }else{
-      this_summary_ids <- DBI::dbGetQuery(gbif_db, paste0("SELECT gbifid FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and ignorerow = 'f'"))
+      this_summary_ids <- DBI::dbGetQuery(gbif_db, paste0("SELECT gbifid FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and ignorerow = 'f' ORDER BY gbifid"))
     }
     
-    this_record <- DBI::dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_occ WHERE gbifid = '", this_summary_ids[input$table_rows_selected,], "'"))
+    this_record <- DBI::dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_occ WHERE gbifid = '", this_summary_ids[input$table_rows_selected,], "' ORDER BY gbifid"))
     this_record_dataset <- DBI::dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_datasets WHERE datasetKey in (SELECT datasetKey FROM bade_gbif_occ WHERE gbifid = '", this_record$gbifid, "')"))
     
     gbif_record_url <- paste0("https://www.gbif.org/occurrence/", this_record$gbifid)
