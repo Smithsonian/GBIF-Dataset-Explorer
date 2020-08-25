@@ -403,8 +403,8 @@ shinyAppServer <- function(input, output, session) {
     
     leaflet() %>%
       addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
-      addMarkers(lng = points$decimallongitude, lat = points$decimallatitude) %>%
-      setView(points$decimallongitude, points$decimallatitude, zoom = 04)
+      addMarkers(lng = as.numeric(points$decimallongitude), lat = as.numeric(points$decimallatitude)) %>%
+      setView(as.numeric(points$decimallongitude), as.numeric(points$decimallatitude), zoom = 04)
   })
   
   
