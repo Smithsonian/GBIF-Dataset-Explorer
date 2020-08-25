@@ -394,17 +394,17 @@ shinyAppServer <- function(input, output, session) {
   output$mymap <- renderLeaflet({
     req(input$i)
     
-    datarows <- DBI::dbGetQuery(gbif_db, paste0("SELECT gbifid, decimalLatitude, decimalLongitude FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and ignorerow = 'f'"))
+    datarows <- DBI::dbGetQuery(gbif_db, paste0("SELECT gbifid, decimallatitude, decimallongitude FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and ignorerow = 'f'"))
     points <- datarows[input$table_rows_selected,]
     
     #check if lat and lon exist
-    req(points$decimalLongitude)
-    req(points$decimalLatitude)
+    req(points$decimallongitude)
+    req(points$decimallatitude)
     
     leaflet() %>%
       addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
-      addMarkers(lng = points$decimalLongitude, lat = points$decimalLatitude) %>%
-      setView(points$decimalLongitude, points$decimalLatitude, zoom = 04)
+      addMarkers(lng = points$decimallongitude, lat = points$decimallatitude) %>%
+      setView(points$decimallongitude, points$decimallatitude, zoom = 04)
   })
   
   
