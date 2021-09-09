@@ -18,19 +18,19 @@ shinyAppUI <- fluidPage(
                                br(),
                                uiOutput("pagetitle"),
                                h4("Fig. 1. Number of issues by record"),
-                               plotOutput("summaryPlot3", height = 600),
+                               shinycssloaders::withSpinner(plotOutput("summaryPlot3", height = 600)),
                                br(),
                                h4("Fig. 2. Pairwise image of issues common to the records"),
-                               plotOutput("summaryPlot2", height = 600)
+                               shinycssloaders::withSpinner(plotOutput("summaryPlot2", height = 600))
                         ),
                         column(width = 6,
                                br(),
                                h4("Table 1. Issues in the downloaded dataset and the number of records per issue"),
-                               DT::dataTableOutput("summaryTable"),
+                               shinycssloaders::withSpinner(DT::dataTableOutput("summaryTable")),
                                br(),
                                hr(),
                                br(),
-                               uiOutput("download_doi")
+                               shinycssloaders::withSpinner(uiOutput("download_doi"))
                         )
                       )
              ),
@@ -122,5 +122,5 @@ shinyAppUI <- fluidPage(
   ),
   hr(),
   #footer ----
-  HTML(paste0("<br><br><br><div class=\"footer navbar-fixed-bottom\" style=\"background: #FFFFFF;\"><br><p>&nbsp;&nbsp;<a href=\"https://dpo.si.edu\" target = _blank>Digitization Program Office, OCIO</a>, Smithsonian</p></div>"))
+  uiOutput("footer")
 )

@@ -2,7 +2,6 @@
 
 export(launchApp)
 export(load_gbif_dwc)
-export(load_idigbio)
 import(DBI)
 import(dplyr)
 import(ggplot2)
@@ -28,4 +27,5 @@ importFrom(shinycssloaders,withSpinner)
 importFrom(stringr,fixed)
 importFrom(stringr,str_replace)
 importFrom(stringr,str_replace_all)
+importFrom(utils,packageVersion)
 importFrom(utils,write.csv)

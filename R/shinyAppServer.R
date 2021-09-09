@@ -14,6 +14,7 @@
 #' @importFrom jsonlite fromJSON
 #' @importFrom jsonlite prettify
 #' @importFrom utils write.csv
+#' @importFrom utils packageVersion
 #'
 
 
@@ -775,4 +776,8 @@ shinyAppServer <- function(input, output, session) {
     
   })
   
+  # footer ----
+  output$footer <- renderUI({
+    HTML(paste0("<br><br><br><div class=\"footer navbar-fixed-bottom\" style=\"background: #FFFFFF;\"><br><p>&nbsp;&nbsp;<a href=\"https://dpo.si.edu\" target = _blank>Digitization Program Office, OCIO</a>, Smithsonian | <a href=\"https://github.com/Smithsonian/GBIF-Dataset-Explorer\" target = _blank>gde</a> version ", packageVersion("gde"), "</p></div>"))
+  })
 }
