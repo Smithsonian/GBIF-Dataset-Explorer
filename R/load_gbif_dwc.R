@@ -10,8 +10,7 @@
 #' @import shiny
 #' @import dplyr
 #' @import readr
-#' @import odbc
-#' @import DBI
+#' @import RSQLite
 #' @importFrom jsonlite fromJSON
 #' @importFrom stringr fixed
 #' @importFrom jsonlite prettify
@@ -40,27 +39,33 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
     stop("zipfile not found")
   }
   
-  if (file.exists("gde_settings.R") == FALSE){
-    cat(" ERROR: Could not find the file with the settings. Save \n a file \"gde_settings.R\" in the working directory with \nthis information:
-            
-##########
-  # Database
-  #  options are 'postgresql' (recommended) or 'sqlite'
-  db_server <- \"postgresql\"
-    
-  #SQLite options
-  database_file <- \"biodiversitydata.sqlite3\"
-    
-  #PostgreSQL options
-  pg_host <- \"\"
-  pg_user <- \"\"
-  pg_database <- \"\"
-  pg_password <- \"\"
+#   if (file.exists("gde_settings.R") == FALSE){
+#     cat(" ERROR: Could not find the file with the settings. Save \n a file \"gde_settings.R\" in the working directory with \nthis information:
+#             
+# ##########
+#   # Database
+#   #  options are 'postgresql' (recommended) or 'sqlite'
+#   db_server <- \"postgresql\"
+#     
+#   #SQLite options
+#   database_file <- \"biodiversitydata.sqlite3\"
+#     
+#   #PostgreSQL options
+#   pg_host <- \"\"
+#   pg_user <- \"\"
+#   pg_database <- \"\"
+#   pg_password <- \"\"
+#   
+#   app_name <- \"\"
+# ##########")
+#     stop("settings_file not found")
+#   }
   
-  app_name <- \"\"
-##########")
-    stop("settings_file not found")
+  if (file.exists("gbif.sqlite3")){
+    unlink("gbif.sqlite3")
   }
+  
+  gbif_db <- dbConnect(RSQLite::SQLite(), "gbif.sqlite3")
   
   if (is.na(tmpdir)){
     stop("tmpdir not set")
@@ -71,68 +76,68 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, pgdriver = NA){
   }
   
   #Import settings----
-  source("gde_settings.R")
+  #source("gde_settings.R")
   
-  if (db_server == "postgresql"){
-    if (is.na(pgdriver)){
-      gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                               driver = "PostgreSQL",
-                               database = pg_database,
-                               uid = pg_user,
-                               pwd = pg_password,
-                               server = pg_host,
-                               port = 5432), silent = TRUE)
-      
-      if (class(gbif_db) == "try-error"){
-        gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                                 driver = "PostgreSQL Unicode(x64)",
-                                 database = pg_database,
-                                 uid = pg_user,
-                                 pwd = pg_password,
-                                 server = pg_host,
-                                 port = 5432), silent = TRUE)
-      }
-      
-      if (class(gbif_db) == "try-error"){
-        gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                                 driver = "PostgreSQL Unicode",
-                                 database = pg_database,
-                                 uid = pg_user,
-                                 pwd = pg_password,
-                                 server = pg_host,
-                                 port = 5432), silent = TRUE)
-      }
-    }else{
-      gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                               driver = "PostgreSQL Unicode",
-                               database = pg_database,
-                               uid = pg_user,
-                               pwd = pg_password,
-                               server = pg_host,
-                               port = 5432), silent = TRUE)
-    }
+  # if (db_server == "postgresql"){
+  #   if (is.na(pgdriver)){
+  #     gbif_db <- try(DBI::dbConnect(odbc::odbc(),
+  #                              driver = "PostgreSQL",
+  #                              database = pg_database,
+  #                              uid = pg_user,
+  #                              pwd = pg_password,
+  #                              server = pg_host,
+  #                              port = 5432), silent = TRUE)
+  #     
+  #     if (class(gbif_db) == "try-error"){
+  #       gbif_db <- try(DBI::dbConnect(odbc::odbc(),
+  #                                driver = "PostgreSQL Unicode(x64)",
+  #                                database = pg_database,
+  #                                uid = pg_user,
+  #                                pwd = pg_password,
+  #                                server = pg_host,
+  #                                port = 5432), silent = TRUE)
+  #     }
+  #     
+  #     if (class(gbif_db) == "try-error"){
+  #       gbif_db <- try(DBI::dbConnect(odbc::odbc(),
+  #                                driver = "PostgreSQL Unicode",
+  #                                database = pg_database,
+  #                                uid = pg_user,
+  #                                pwd = pg_password,
+  #                                server = pg_host,
+  #                                port = 5432), silent = TRUE)
+  #     }
+  #   }else{
+  #     gbif_db <- try(DBI::dbConnect(odbc::odbc(),
+  #                              driver = "PostgreSQL Unicode",
+  #                              database = pg_database,
+  #                              uid = pg_user,
+  #                              pwd = pg_password,
+  #                              server = pg_host,
+  #                              port = 5432), silent = TRUE)
+  #   }
     
     
-    if (class(gbif_db) == "try-error"){
-      stop("Could not connect to PostgreSQL.")
-    }else{
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_occ;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_verbatim;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_multimedia;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_issues;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_datasets;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_issue_stats;")
-      n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_metadata;")
-    }
-  }else if (db_server == "sqlite"){
-    # if (file.exists(database_file)){
-    #   try(unlink(database_file), silent = TRUE)
+    # if (class(gbif_db) == "try-error"){
+    #   stop("Could not connect to PostgreSQL.")
+    # }else{
+    #   n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_occ;")
+    #   n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_verbatim;")
+    #   n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_multimedia;")
+    #   n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_issues;")
+    #   n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_datasets;")
+    #   n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_issue_stats;")
+    #   n <- DBI::dbExecute(gbif_db, "DROP TABLE IF EXISTS bade_gbif_metadata;")
     # }
-    # gbif_db <- DBI::dbConnect(RSQLite::SQLite(), database_file)
-    stop("SQLite not yet implemented.")
-  }else{
-    stop("Incorrect db_server setting.")
-  }
+  # }else if (db_server == "sqlite"){
+  #   # if (file.exists(database_file)){
+  #   #   try(unlink(database_file), silent = TRUE)
+  #   # }
+  #   # gbif_db <- DBI::dbConnect(RSQLite::SQLite(), database_file)
+  #   stop("SQLite not yet implemented.")
+  # }else{
+  #   stop("Incorrect db_server setting.")
+  # }
   
   occ_file <- paste0(tmpdir, "/occurrence.txt")
   ver_file <- paste0(tmpdir, "/verbatim.txt")

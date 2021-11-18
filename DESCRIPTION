@@ -1,14 +1,14 @@
 Package: gde
 Title: GBIF Dataset Explorer
-Version: 0.1.4
-Date: 2020-09-09
+Version: 0.2.0
+Date: 2021-11-18
 Authors@R: c(person("Luis J", "Villanueva", email = "villanueval@si.edu",
                   role = c("aut", "cre"))
                   )
 Description: Functions to explore datasets from the Global Biodiversity Information Facility (GBIF - <https://www.gbif.org/>) using a Shiny interface.
 Encoding: UTF-8
 Imports: dplyr, stringr, DT, XML, data.table, R.utils, readr, jsonlite, progress, rgbif, httr, shinyWidgets, shinycssloaders
-Depends: R(>= 3.2.0), DBI, leaflet, shiny, ggplot2, odbc
+Depends: R(>= 3.2.0), leaflet, shiny, ggplot2, RSQLite
 License: Apache License (>= 2.0)
 URL: https://github.com/Smithsonian/GBIF-Dataset-Explorer
 BugReports: https://github.com/Smithsonian/GBIF-Dataset-Explorer/issues

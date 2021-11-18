@@ -1,3 +1,7 @@
 Changes in gde 0.1.4
 =======================
  - New package, formatted to R package standards and CRAN
+
+Changes in gde 0.2.0
+=======================
+ - Chaged database to SQLite to reduce dependencies
