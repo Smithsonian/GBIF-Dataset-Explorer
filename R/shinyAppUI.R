@@ -10,7 +10,8 @@
 # create the shiny application user interface
 # UI ----
 shinyAppUI <- fluidPage(
-  navbarPage(title = textOutput("app_title"),
+  fluidRow(
+    navbarPage(title = textOutput("app_title"),
              # Tab:Summary ----
              tabPanel("Summary", 
                       fluidRow(
@@ -62,7 +63,8 @@ shinyAppUI <- fluidPage(
                         )
                       ),
                       hr(), 
-                      fluidRow(column(width=7,
+                      fluidRow(
+                        column(width=7,
                                       fluidRow(
                                         column(width=8,         
                                                uiOutput("issuename")
@@ -78,8 +80,8 @@ shinyAppUI <- fluidPage(
                                       ),
                                       uiOutput("table_heading"),
                                       shinycssloaders::withSpinner(DT::dataTableOutput("table"))
-                      ),
-                      column(width=5, 
+                          ),
+                        column(width=5, 
                              conditionalPanel("input.table_rows_selected != null && input.table_rows_selected != ''",
                                               shinyWidgets::panel(
                                                 heading = "Record detail",
@@ -88,7 +90,7 @@ shinyAppUI <- fluidPage(
                                                 leaflet::leafletOutput("mymap")
                                               )
                              )
-                      )
+                        )
                       )
              ),
              # Tab:DataFields ----
@@ -119,6 +121,7 @@ shinyAppUI <- fluidPage(
                         )
                       )
              )
+    )
   ),
   hr(),
   #footer ----

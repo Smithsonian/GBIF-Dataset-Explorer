@@ -4,20 +4,20 @@
 \alias{load_gbif_dwc}
 \title{Open GBIF download from zip file}
 \usage{
-load_gbif_dwc(zipfile = NA, tmpdir = NA, pgdriver = NA)
+load_gbif_dwc(zipfile = NA, tmpdir = NA, page_title = "GBIF Data")
 }
 \arguments{
 \item{zipfile}{Path to the zipfile}
 
 \item{tmpdir}{Temporary path for extracted files}
 
-\item{pgdriver}{ODBC driver for the Postgres database. If not set, the function will try some options.}
+\item{page_title}{Title to show on the Shiny app.}
 }
 \description{
 Function that loads the data in a zip file downloaded from GBIF
 }
 \examples{
 \dontrun{
-data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "/tmp")
+data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "/tmp", page_title = "GBIF Dataset 1")
 }
 }

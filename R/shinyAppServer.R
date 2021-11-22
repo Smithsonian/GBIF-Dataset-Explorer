@@ -4,17 +4,17 @@
 #' @param output provided by shiny
 #' @param session provided by shiny
 #' 
-#' @import DBI
+#' @import RSQLite
 #' @import leaflet
 #' @import ggplot2
 #' @import shiny
 #' @importFrom rgbif gbif_issues
-#' @importFrom odbc odbc
 #' @importFrom dplyr filter
 #' @importFrom jsonlite fromJSON
 #' @importFrom jsonlite prettify
 #' @importFrom utils write.csv
 #' @importFrom utils packageVersion
+#' @importFrom stringr str_replace_all
 #'
 
 
@@ -22,55 +22,10 @@
 # Based on https://github.com/MangoTheCat/shinyAppDemo/
 shinyAppServer <- function(input, output, session) {
 
-  #Import settings----
-  source("gde_settings.R")
+  gbif_db <- dbConnect(RSQLite::SQLite(), "gbif.sqlite3")
   
-  output$app_title <- renderText({app_name})
-  
-  if (db_server == "postgresql"){
-    if (!exists("pgdriver")){
-      gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                               driver = "PostgreSQL",
-                               database = pg_database,
-                               uid = pg_user,
-                               pwd = pg_password,
-                               server = pg_host,
-                               port = 5432))
-      
-      if (class(gbif_db) == "try-error"){
-        gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                                 driver = "PostgreSQL Unicode(x64)",
-                                 database = pg_database,
-                                 uid = pg_user,
-                                 pwd = pg_password,
-                                 server = pg_host,
-                                 port = 5432))
-      }
-      
-      if (class(gbif_db) == "try-error"){
-        gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                                 driver = "PostgreSQL Unicode",
-                                 database = pg_database,
-                                 uid = pg_user,
-                                 pwd = pg_password,
-                                 server = pg_host,
-                                 port = 5432))
-      }
-    }else{
-      gbif_db <- try(DBI::dbConnect(odbc::odbc(),
-                               driver = pgdriver,
-                               database = pg_database,
-                               uid = pg_user,
-                               pwd = pg_password,
-                               server = pg_host,
-                               port = 5432))
-    }
-    
-    
-    if (class(gbif_db) == "try-error"){
-      stop("Could not connect to PostgreSQL.")
-    }
-  }
+  app_name <- dbGetQuery(gbif_db, "SELECT data FROM metadata WHERE id='title'")$data
+  output$app_title <- renderText(app_name)
   
   #gbif_issues ----
   gbifissues <- rgbif::gbif_issues()
@@ -118,7 +73,7 @@ shinyAppServer <- function(input, output, session) {
   
   
   # Get rows with issues
-  distinct_issues <- DBI::dbGetQuery(gbif_db, "SELECT DISTINCT issue FROM bade_gbif_issues")
+  distinct_issues <- dbGetQuery(gbif_db, "SELECT DISTINCT issue FROM bade_gbif_issues")
   distinct_issues <- unlist(distinct_issues, use.names = FALSE)
   
   #distinct_issues pulldown ----
@@ -162,7 +117,7 @@ shinyAppServer <- function(input, output, session) {
     
     query <- paste0("SELECT ", cols, " FROM bade_gbif_verbatim WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and gbifid NOT IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 't') ORDER BY gbifid")
     #print(query)
-    datarows <- DBI::dbGetQuery(gbif_db, query)
+    datarows <- dbGetQuery(gbif_db, query)
     
     df <- data.frame(datarows, stringsAsFactors = FALSE)
     
@@ -204,7 +159,7 @@ shinyAppServer <- function(input, output, session) {
   
   
   output$download_doi <- renderUI({
-    metadata_string <- DBI::dbGetQuery(gbif_db, paste0("SELECT metadata_json::text FROM bade_gbif_metadata"))
+    metadata_string <- dbGetQuery(gbif_db, paste0("SELECT metadata_json FROM bade_gbif_metadata"))
     gbif_metadata <- jsonlite::fromJSON(metadata_string$metadata_json)
     gbif_metadata_json <- jsonlite::prettify(metadata_string$metadata_json)
     
@@ -268,13 +223,13 @@ shinyAppServer <- function(input, output, session) {
     req(input$table_rows_selected)
     
     if (input$i == "None"){
-      this_summary_ids <- DBI::dbGetQuery(gbif_db, "SELECT gbifid FROM bade_gbif_occ WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) and ignorerow = 'f' ORDER BY gbifid")
+      this_summary_ids <- dbGetQuery(gbif_db, "SELECT gbifid FROM bade_gbif_occ WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) and ignorerow = 'f' ORDER BY gbifid")
     }else{
-      this_summary_ids <- DBI::dbGetQuery(gbif_db, paste0("SELECT gbifid FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and ignorerow = 'f' ORDER BY gbifid"))
+      this_summary_ids <- dbGetQuery(gbif_db, paste0("SELECT gbifid FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and ignorerow = 'f' ORDER BY gbifid"))
     }
     
-    this_record <- DBI::dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_occ WHERE gbifid = '", this_summary_ids[input$table_rows_selected,], "' ORDER BY gbifid"))
-    this_record_dataset <- DBI::dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_datasets WHERE datasetKey in (SELECT datasetKey FROM bade_gbif_occ WHERE gbifid = '", this_record$gbifid, "')"))
+    this_record <- dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_occ WHERE gbifid = '", this_summary_ids[input$table_rows_selected,], "' ORDER BY gbifid"))
+    this_record_dataset <- dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_datasets WHERE datasetKey in (SELECT datasetKey FROM bade_gbif_occ WHERE gbifid = '", this_record$gbifid, "')"))
     
     gbif_record_url <- paste0("https://www.gbif.org/occurrence/", this_record$gbifid)
     occurrenceID <- this_record$occurrenceid
@@ -315,7 +270,7 @@ shinyAppServer <- function(input, output, session) {
     }
     
     #Images
-    images <- DBI::dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_multimedia WHERE gbifid = '", this_record$gbifid, "' AND type = 'StillImage'"))
+    images <- dbGetQuery(gbif_db, paste0("SELECT * FROM bade_gbif_multimedia WHERE gbifid = '", this_record$gbifid, "' AND type = 'StillImage'"))
     if (dim(images)[1] > 0){
       
       html_to_print <- paste0(html_to_print, "<dt>Images</dt><dd>")
@@ -356,9 +311,9 @@ shinyAppServer <- function(input, output, session) {
     req(input$table_rows_selected)
     
     if (input$i == "None"){
-      this_summary_ids <- DBI::dbGetQuery(gbif_db, "SELECT gbifid FROM bade_gbif_occ WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) AND ignorerow = 'f'")
+      this_summary_ids <- dbGetQuery(gbif_db, "SELECT gbifid FROM bade_gbif_occ WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) AND ignorerow = 'f'")
     }else{
-      this_summary_ids <- DBI::dbGetQuery(gbif_db, paste0("SELECT gbifid FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') AND ignorerow = 'f'"))
+      this_summary_ids <- dbGetQuery(gbif_db, paste0("SELECT gbifid FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') AND ignorerow = 'f'"))
     }
     #cat(this_summary_ids)
     this_record <- dbExecute(gbif_db, paste0("UPDATE bade_gbif_occ SET ignorerow = 't' WHERE gbifid = '", this_summary_ids[input$table_rows_selected,], "'"))
@@ -378,9 +333,9 @@ shinyAppServer <- function(input, output, session) {
     }
     
     if (input$i == "None"){
-      datarows <- DBI::dbGetQuery(gbif_db, paste0("SELECT ", cols, " FROM bade_gbif_verbatim WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) and gbifid NOT IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 't')"))
+      datarows <- dbGetQuery(gbif_db, paste0("SELECT ", cols, " FROM bade_gbif_verbatim WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) and gbifid NOT IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 't')"))
     }else{
-      datarows <- DBI::dbGetQuery(gbif_db, paste0("SELECT ", cols, " FROM bade_gbif_verbatim WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and gbifid NOT IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 't')"))
+      datarows <- dbGetQuery(gbif_db, paste0("SELECT ", cols, " FROM bade_gbif_verbatim WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and gbifid NOT IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 't')"))
     }
     
     datarows <- data.frame(datarows, stringsAsFactors = FALSE)
@@ -393,7 +348,7 @@ shinyAppServer <- function(input, output, session) {
   output$mymap <- renderLeaflet({
     req(input$i)
     
-    datarows <- DBI::dbGetQuery(gbif_db, paste0("SELECT gbifid, decimallatitude, decimallongitude FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and ignorerow = 'f'"))
+    datarows <- dbGetQuery(gbif_db, paste0("SELECT gbifid, decimallatitude, decimallongitude FROM bade_gbif_occ WHERE gbifid IN (SELECT gbifid from bade_gbif_issues WHERE issue = '", input$i, "') and ignorerow = 'f'"))
     points <- datarows[input$table_rows_selected,]
     
     #check if lat and lon exist
@@ -440,7 +395,7 @@ shinyAppServer <- function(input, output, session) {
     },
     content = function(file) {
       
-      write.csv(DBI::dbGetQuery(gbif_db, "SELECT * FROM bade_gbif_occ WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) and ignorerow = 'f'"), file, row.names = FALSE)
+      write.csv(dbGetQuery(gbif_db, "SELECT * FROM bade_gbif_occ WHERE gbifid NOT IN (SELECT DISTINCT gbifid FROM bade_gbif_issues) and ignorerow = 'f'"), file, row.names = FALSE)
     }
   )
   
@@ -497,7 +452,7 @@ shinyAppServer <- function(input, output, session) {
     },
     content = function(file) {
       
-      write.csv(DBI::dbGetQuery(gbif_db, "SELECT * FROM bade_gbif_verbatim WHERE gbifid IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 'f')"), file, row.names = FALSE)
+      write.csv(dbGetQuery(gbif_db, "SELECT * FROM bade_gbif_verbatim WHERE gbifid IN (SELECT gbifid FROM bade_gbif_occ WHERE ignorerow = 'f')"), file, row.names = FALSE)
     }
   )
   
@@ -526,15 +481,13 @@ shinyAppServer <- function(input, output, session) {
          <a href=\"https://www.gbif.org/article/5i3CQEZ6DuWiycgMaaakCo/gbif-infrastructure-data-processing\" target = _blank>
          processing information page</a> indicates:</p>
          <pre>Not all issues indicate bad data. Some are merley flagging the fact that GBIF has altered values during processing.</pre>
-         <p>This tool allows collection and data managers, as well as researchers, to explore issues in GBIF Darwin Core Archive downloads in an easy web-based interface. Just enter a GBIF download key and the tool will download the zip file, create a local database, and display the issues in the data contained. Once provided with the GBIF key, this tool will:</p>
+         <p>This tool allows collection and data managers, as well as researchers, to explore issues in GBIF Darwin Core Archive downloads in an easy web-based interface. To load a DarwinCore download to the database:</p>
          <ul>
          <li>Download the zip archive</li>
-         <li>Extract the files</li>
-         <li>Create a local database</li>
-         <li>Load the data from the occurrence, verbatim, multimedia, and dataset tables to the database</li>
-         <li>Generate summary statistics of the issues</li>
+         <li>Run <em>load_gbif_dwc(\"zipfile.zip\", \"tmp_folder\", \"Title of the page\")</em></li>
+         <li>Wait for the database to be created</li>
+         <li>Run the app using: <em>launchApp()</em></li>
          </ul>
-        <p>As an alternative, you can copy the zip file to the `data` folder and run the `load_from_DwC_zip.R` script. It will run the same steps as above (skipping downloading the file) from the command line. </p>
 
         <p>Then, you can click the 'Explore Issues' tab to see how many records have been tagged with a particular issue.</p>
 
@@ -547,14 +500,7 @@ shinyAppServer <- function(input, output, session) {
   # Help2 ----
   output$help2 <- renderUI({
     HTML("
-         <div class=\"panel panel-primary\"> <div class=\"panel-heading\"> <h3 class=\"panel-title\">GBIF Download Key</h3></div><div class=\"panel-body\">
-        <p>The key is obtained when requesting a download of occurrence data from GBIF. It can be requested via their API or on the website. If your download URL is:</p>
-          <pre>https://www.gbif.org/occurrence/download/0001419-180824113759888</pre>
-          <p>Then, the last part, '0001419-180824113759888' is the GBIF key you will need to provide this tool.</p>
-          <p>This tool works only with Darwin Core Archives, not with CSV archives.</p>
-         </div></div>
-         
-         <div class=\"panel panel-primary\"> <div class=\"panel-heading\"> <h3 class=\"panel-title\">Deleting Records</h3></div><div class=\"panel-body\">
+        <div class=\"panel panel-primary\"> <div class=\"panel-heading\"> <h3 class=\"panel-title\">Deleting Records</h3></div><div class=\"panel-body\">
         <p>You can delete individual records from the local database by clicking on the 'Delete record' button.</p>
         <p>Deleted records will not show up in the table of results or when downloading the Occurrence or Verbatim files. This option can be used to remove records, for example, where:</p>
          <ul>
@@ -585,7 +531,7 @@ shinyAppServer <- function(input, output, session) {
     summary_vals <- data.frame(matrix(ncol = 4, nrow = 0, data = NA))
     
     for (i in 1:length(distinct_issues)){
-      this_issue <- dbGetQuery(gbif_db, paste0("SELECT count(*)::integer as cnt FROM bade_gbif_issues WHERE issue = '", distinct_issues[i], "'"))
+      this_issue <- dbGetQuery(gbif_db, paste0("SELECT count(*) as cnt FROM bade_gbif_issues WHERE issue = '", distinct_issues[i], "'"))
       
       issue_description <- gbifissues[gbifissues$issue == distinct_issues[i],]$description
       
@@ -621,14 +567,14 @@ shinyAppServer <- function(input, output, session) {
   # summaryPlot2 - Related issues ----
   output$summaryPlot2 <- renderPlot({
     
-    issues_summ <- dbGetQuery(gbif_db, "select replace(a.issue, '_', ' ') as issue_a, replace(b.issue, '_', ' ') as issue_b, count(a.gbifid)::integer as no_records from (select gbifid, issue from bade_gbif_issues) a LEFT JOIN (select gbifid, issue from bade_gbif_issues) b ON (a.gbifid = b.gbifid AND a.issue != b.issue) WHERE b.issue IS NOT NULL GROUP BY a.issue, b.issue")
+    issues_summ <- dbGetQuery(gbif_db, "select replace(a.issue, '_', ' ') as issue_a, replace(b.issue, '_', ' ') as issue_b, count(a.gbifid) as no_records from (select gbifid, issue from bade_gbif_issues) a LEFT JOIN (select gbifid, issue from bade_gbif_issues) b ON (a.gbifid = b.gbifid AND a.issue != b.issue) WHERE b.issue IS NOT NULL GROUP BY a.issue, b.issue")
     
     ggplot(data = issues_summ, aes(issue_b, issue_a)) +
       geom_tile(aes(fill = no_records), color = "white") +
       theme(
         axis.title = element_blank(), 
         legend.position="right", 
-        axis.text.x = element_text(size=10, angle = 45, hjust = 1),
+        axis.text.x = element_text(size=10, angle = 90, hjust = 1),
         #axis.text.y = element_text(size=10, angle = 45),
         axis.text.y = element_text(size=10),
         #axis.text = element_text(size = 10),
@@ -646,9 +592,13 @@ shinyAppServer <- function(input, output, session) {
   
   # summaryPlot3 - Plot records with multiple issues ----
   output$summaryPlot3 <- renderPlot({
-    issues_by_rec <- dbGetQuery(gbif_db, "select a.no_issues as no_issues, count(a.gbifid)::integer as no_records, round((count(a.gbifid)::numeric/(b.total_records)::numeric)*100, 2)::float as percent from (select gbifid, count(*)::integer as no_issues from bade_gbif_issues group by gbifid) a, (select count(gbifid)::integer as total_records from bade_gbif_occ) b group by a.no_issues, b.total_records")
+    issues_by_rec <- dbGetQuery(gbif_db, "select a.no_issues as no_issues, count(a.gbifid) as no_records, b.total_records as total_records from (select gbifid, count(*) as no_issues from bade_gbif_issues group by gbifid) a, (select count(gbifid) as total_records from bade_gbif_occ) b group by a.no_issues, b.total_records")
     
-    issues_by_rec_none <- dbGetQuery(gbif_db, "select 0 as no_issues, count(a.gbifid)::integer as no_records, round((count(a.gbifid)::numeric/(b.total_records)::numeric)*100, 2)::float as percent from (select gbifid from bade_gbif_occ WHERE gbifid NOT IN (select gbifid from bade_gbif_issues)) a, (select count(gbifid)::integer as total_records from bade_gbif_occ) b group by b.total_records")
+    issues_by_rec$percent <- round((issues_by_rec$no_records/issues_by_rec$total_records)*100, 2)
+    
+    issues_by_rec_none <- dbGetQuery(gbif_db, "select 0 as no_issues, count(a.gbifid) as no_records, b.total_records as total_records from (select gbifid from bade_gbif_occ WHERE gbifid NOT IN (select gbifid from bade_gbif_issues)) a, (select count(gbifid) as total_records from bade_gbif_occ) b group by b.total_records")
+    issues_by_rec_none$percent <- round((issues_by_rec_none$no_records/issues_by_rec_none$total_records)*100, 2)
+    
     if (issues_by_rec_none$no_records > 0){
       #If there are records without issues, add them
       issues_by_rec <- rbind(issues_by_rec, issues_by_rec_none)
@@ -679,7 +629,7 @@ shinyAppServer <- function(input, output, session) {
     
     fields_summary <- dbGetQuery(gbif_db, "SELECT field_name, not_null_vals, no_rows_distinct FROM bade_gbif_issue_stats ORDER BY field_name")
     fields_summary[1] <- lapply(fields_summary[1], as.character)
-    fields_summary[1] <- lapply(fields_summary[1], str_replace_all, pattern = '"', replacement = '')
+    #fields_summary[1] <- lapply(fields_summary[1], stringr::str_replace_all, pattern = '"', replacement = '')
     
     fields_summary[, 3] <- prettyNum(as.integer(fields_summary[, 3]), big.mark = ",", scientific = FALSE)
     
@@ -696,7 +646,7 @@ shinyAppServer <- function(input, output, session) {
   
   
   
-  # fields_table ----
+  # fields_details ----
   output$fields_details <- DT::renderDataTable({
     # details of record ----
     output$fields_details_h <- renderUI({
@@ -710,7 +660,14 @@ shinyAppServer <- function(input, output, session) {
     field_to_check <- as.character(fields_summary[input$fields_table_rows_selected, 1])
     
     output$fields_details_h <- renderUI({
-      h4(paste0("Unique data values in data field: '", str_replace_all(field_to_check, '"', ''), "'."))
+      if (substr(field_to_check, 1, 1) == "_"){
+        tagList(
+          h4(paste0("Unique data values in data field: '", field_to_check, "'.")),
+          HTML("<p><em>Field original name: ", substr(field_to_check, 2, 100), " - underscore is used to avoid query issues</em></p>")
+        )
+      }else{
+        h4(paste0("Unique data values in data field: '", field_to_check, "'."))
+      }
     })
     
     #no rows
@@ -728,7 +685,7 @@ shinyAppServer <- function(input, output, session) {
     field_data <- dbGetQuery(gbif_db, f_query)
     
     for (i in seq(1, dim(field_data)[1])){
-      field_data[i, 3] <- round((as.integer(field_data[i, 2]) / as.integer(no_rows$count)) * 100, 2)
+      field_data[i, 3] <- round((as.integer(field_data[i, 2]) / as.integer(no_rows$`COUNT(*)`)) * 100, 2)
     }
     
     names(field_data) <- c("Field Value", "No. of rows", "Percent of records")

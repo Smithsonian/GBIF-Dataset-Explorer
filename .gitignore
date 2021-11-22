@@ -30,3 +30,8 @@ vignettes/*.pdf
 gde_settings.R
 
 temp
+tmp
+
+*.zip
+
+*.sqlite3
