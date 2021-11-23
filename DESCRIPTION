@@ -1,7 +1,7 @@
 Package: gde
 Title: GBIF Dataset Explorer
 Version: 0.2.0
-Date: 2021-11-22
+Date: 2021-11-23
 Authors@R: c(person("Luis J", "Villanueva", email = "villanueval@si.edu",
                   role = c("aut", "cre"))
                   )
