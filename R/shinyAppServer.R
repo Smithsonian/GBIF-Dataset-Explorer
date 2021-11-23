@@ -8,7 +8,6 @@
 #' @import leaflet
 #' @import ggplot2
 #' @import shiny
-#' @importFrom rgbif gbif_issues
 #' @importFrom dplyr filter
 #' @importFrom jsonlite fromJSON
 #' @importFrom jsonlite prettify
@@ -28,7 +27,148 @@ shinyAppServer <- function(input, output, session) {
   output$app_title <- renderText(app_name)
   
   #gbif_issues ----
-  gbifissues <- rgbif::gbif_issues()
+  #gbifissues <- rgbif::gbif_issues()
+  gbifissues <- data.frame(
+    issue = c(
+  "AMBIGUOUS_COLLECTION",
+  "AMBIGUOUS_INSTITUTION",
+  "BASIS_OF_RECORD_INVALID",
+  "COLLECTION_MATCH_FUZZY",
+  "COLLECTION_MATCH_NONE",
+  "CONTINENT_COUNTRY_MISMATCH",
+  "CONTINENT_DERIVED_FROM_COORDINATES",
+  "CONTINENT_INVALID",
+  "COORDINATE_ACCURACY_INVALID",
+  "COORDINATE_INVALID",
+  "COORDINATE_OUT_OF_RANGE",
+  "COORDINATE_PRECISION_INVALID",
+  "COORDINATE_PRECISION_UNCERTAINTY_MISMATCH",
+  "COORDINATE_REPROJECTED",
+  "COORDINATE_REPROJECTION_FAILED",
+  "COORDINATE_REPROJECTION_SUSPICIOUS",
+  "COORDINATE_ROUNDED",
+  "COORDINATE_UNCERTAINTY_METERS_INVALID",
+  "COUNTRY_COORDINATE_MISMATCH",
+  "COUNTRY_DERIVED_FROM_COORDINATES",
+  "COUNTRY_INVALID",
+  "COUNTRY_MISMATCH",
+  "DEPTH_MIN_MAX_SWAPPED",
+  "DEPTH_NON_NUMERIC",
+  "DEPTH_NOT_METRIC",
+  "DEPTH_UNLIKELY",
+  "DIFFERENT_OWNER_INSTITUTION",
+  "ELEVATION_MIN_MAX_SWAPPED",
+  "ELEVATION_NON_NUMERIC",
+  "ELEVATION_NOT_METRIC",
+  "ELEVATION_UNLIKELY",
+  "FOOTPRINT_SRS_INVALID",
+  "FOOTPRINT_WKT_INVALID",
+  "FOOTPRINT_WKT_MISMATCH",
+  "GEODETIC_DATUM_ASSUMED_WGS84",
+  "GEODETIC_DATUM_INVALID",
+  "GEOREFERENCED_DATE_INVALID",
+  "GEOREFERENCED_DATE_UNLIKELY",
+  "IDENTIFIED_DATE_INVALID",
+  "IDENTIFIED_DATE_UNLIKELY",
+  "INDIVIDUAL_COUNT_CONFLICTS_WITH_OCCURRENCE_STATUS",
+  "INDIVIDUAL_COUNT_INVALID",
+  "INSTITUTION_COLLECTION_MISMATCH",
+  "INSTITUTION_MATCH_FUZZY",
+  "INSTITUTION_MATCH_NONE",
+  "INTERPRETATION_ERROR",
+  "MODIFIED_DATE_INVALID",
+  "MODIFIED_DATE_UNLIKELY",
+  "MULTIMEDIA_DATE_INVALID",
+  "MULTIMEDIA_URI_INVALID",
+  "OCCURRENCE_STATUS_INFERRED_FROM_BASIS_OF_RECORD",
+  "OCCURRENCE_STATUS_INFERRED_FROM_INDIVIDUAL_COUNT",
+  "OCCURRENCE_STATUS_UNPARSABLE",
+  "POSSIBLY_ON_LOAN",
+  "PRESUMED_NEGATED_LATITUDE",
+  "PRESUMED_NEGATED_LONGITUDE",
+  "PRESUMED_SWAPPED_COORDINATE",
+  "RECORDED_DATE_INVALID",
+  "RECORDED_DATE_MISMATCH",
+  "RECORDED_DATE_UNLIKELY",
+  "REFERENCES_URI_INVALID",
+  "TAXON_MATCH_AGGREGATE",
+  "TAXON_MATCH_FUZZY",
+  "TAXON_MATCH_HIGHERRANK",
+  "TAXON_MATCH_NONE",
+  "TYPE_STATUS_INVALID",
+  "ZERO_COORDINATE"
+  ),
+
+description = c(
+      "The given collection matches with more than 1 GRSciColl collection.",
+      "The given institution matches with more than 1 GRSciColl institution.",
+      "The given basis of record is impossible to interpret or significantly different from the recommended vocabulary.",
+      "The given collection was fuzzily matched to a GRSciColl collection.",
+      "The given collection couldn't be matched with any GRSciColl collection.",
+      "The interpreted continent and country do not match.",
+      "The interpreted continent is based on the coordinates, not the verbatim string information.",
+      "Uninterpretable continent values found.",
+      "Deprecated.",
+      "Coordinate value is given in some form but GBIF is unable to interpret it.",
+      "Coordinate has a latitude and/or longitude value beyond the maximum (or minimum) decimal value.",
+      "Indicates an invalid or very unlikely coordinatePrecision",
+      "Deprecated.",
+      "The original coordinate was successfully reprojected from a different geodetic datum to WGS84.",
+      "The given decimal latitude and longitude could not be reprojected to WGS84 based on the provided datum.",
+      "Indicates successful coordinate reprojection according to provided datum, but which results in a datum shift larger than 0.1 decimal degrees.",
+      "Original coordinate modified by rounding to 5 decimals.",
+      "Indicates an invalid or very unlikely dwc:uncertaintyInMeters.",
+      "The interpreted occurrence coordinates fall outside of the indicated country.",
+      "The interpreted country is based on the coordinates, not the verbatim string information.",
+      "Uninterpretable country values found.",
+      "Interpreted country for dwc:country and dwc:countryCode contradict each other.",
+      "Set if supplied minimum depth > maximum depth",
+      "Set if depth is a non-numeric value",
+      "Set if supplied depth is not given in the metric system, for example using feet instead of meters",
+      "Set if depth is larger than 11,000m or negative.",
+      "The given owner institution is different than the given institution.",
+      "Set if supplied minimum elevation > maximum elevation",
+      "Set if elevation is a non-numeric value",
+      "Set if supplied elevation is not given in the metric system, for example using feet instead of meters",
+      "Set if elevation is above the troposphere (17km) or below 11km (Mariana Trench).",
+      "The Footprint Spatial Reference System given could not be interpreted.",
+      "The Footprint Well-Known-Text given could not be interpreted.",
+      "The Footprint Well-Known-Text conflicts with the interpreted coordinates (Decimal Latitude, Decimal Longitude etc).",
+      "Indicating that the interpreted coordinates assume they are based on WGS84 datum as the datum was either not indicated or interpretable.",
+      "The geodetic datum given could not be interpreted.",
+      "The date given for dwc:georeferencedDate is invalid and can't be interpreted at all.",
+      "The date given for dwc:georeferencedDate is in the future or before Linnean times (1700).",
+      "The date given for dwc:dateIdentified is invalid and can't be interpreted at all.",
+      "The date given for dwc:dateIdentified is in the future or before Linnean times (1700).",
+      "Example: individual count value > 0, but occurrence status is absent.",
+      "The individual count value is not a positive integer",
+      "The collection matched doesn't belong to the institution matched.",
+      "The given institution was fuzzily matched to a GRSciColl institution.",
+      "The given institution couldn't be matched with any GRSciColl institution.",
+      "An error occurred during interpretation, leaving the record interpretation incomplete.",
+      "A (partial) invalid date is given for dc:modified, such as a nonexistent date, zero month, etc.",
+      "The date given for dc:modified is in the future or predates Unix time (1970).",
+      "An invalid date is given for dc:created of a multimedia object.",
+      "An invalid URI is given for a multimedia object.",
+      "Occurrence status was inferred from basis of records",
+      "Occurrence status was inferred from the individual count value",
+      "Occurrence status value can't be assigned to OccurrenceStatus",
+      "Deprecated. ",
+      "Latitude appears to be negated, e.g.",
+      "Longitude appears to be negated, e.g.",
+      "Latitude and longitude appear to be swapped.",
+      "A (partial) invalid date is given, such as a non existing date, zero month, etc.",
+      "The recorded date specified as the eventDate string and the individual year, month, day are contradictory.",
+      "The recorded date is highly unlikely, falling either into the future or representing a very old date before 1600 thus predating modern taxonomy.",
+      "An invalid URI is given for dc:references.",
+      "Matching to the taxonomic backbone can only be done on a species level, but the occurrence was in fact considered a broader species aggregate/complex.",
+      "Matching to the taxonomic backbone can only be done using a fuzzy, non exact match.",
+      "Matching to the taxonomic backbone can only be done on a higher rank and not the scientific name.",
+      "Matching to the taxonomic backbone cannot be done because there was no match at all, or several matches with too little information to keep them apart (potentially homonyms).",
+      "The given type status is impossible to interpret or significantly different from the recommended vocabulary.",
+      "Coordinate is the exact 0, 0 coordinate, often indicating a bad null coordinate.")
+  )
+  
   #issues dealing with coordinates 
   spatial_issues <- c("CONTINENT_COUNTRY_MISMATCH",
                       "CONTINENT_DERIVED_FROM_COORDINATES",
@@ -596,17 +736,20 @@ shinyAppServer <- function(input, output, session) {
     
     issues_by_rec$percent <- round((issues_by_rec$no_records/issues_by_rec$total_records)*100, 2)
     
-    issues_by_rec_none <- dbGetQuery(gbif_db, "select 0 as no_issues, count(a.gbifid) as no_records, b.total_records as total_records from (select gbifid from bade_gbif_occ WHERE gbifid NOT IN (select gbifid from bade_gbif_issues)) a, (select count(gbifid) as total_records from bade_gbif_occ) b group by b.total_records")
-    issues_by_rec_none$percent <- round((issues_by_rec_none$no_records/issues_by_rec_none$total_records)*100, 2)
-    
-    if (issues_by_rec_none$no_records > 0){
-      #If there are records without issues, add them
-      issues_by_rec <- rbind(issues_by_rec, issues_by_rec_none)
+    issues_by_rec_none <- dbGetQuery(gbif_db, "select count(a.gbifid) as no_records from (select gbifid from bade_gbif_occ WHERE gbifid NOT IN (select gbifid from bade_gbif_issues)) a")
+    if (issues_by_rec_none$no_records>0){
+      issues_by_rec_none_percent <- round((issues_by_rec_none$no_records/max(issues_by_rec$total_records))*100, 2)
+      
+      issues_by_rec <- rbind(issues_by_rec, c(0, issues_by_rec_none$no_records, max(issues_by_rec$total_records), issues_by_rec_none_percent))
+      
     }
+
+    issues_by_rec["percent"][issues_by_rec["percent"] == 0.00] <- "< 0.01"
     
     ggplot(data = issues_by_rec, aes(x = no_issues, y = no_records, label = percent, colour = no_issues, fill = no_issues)) +
       geom_col() +
       scale_y_continuous(labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+      scale_x_continuous(breaks = issues_by_rec$no_issues) + 
       theme(
         axis.text = element_text(size = 12), 
         axis.title = element_text(size = 14, face = "bold"), 
