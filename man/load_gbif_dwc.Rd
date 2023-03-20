@@ -4,7 +4,7 @@
 \alias{load_gbif_dwc}
 \title{Open GBIF download from zip file}
 \usage{
-load_gbif_dwc(zipfile = NA, tmpdir = NA, page_title = "GBIF Data")
+load_gbif_dwc(zipfile = NA, tmpdir = "tmp", page_title = "GBIF Data")
 }
 \arguments{
 \item{zipfile}{Path to the zipfile}
@@ -18,6 +18,6 @@ Function that loads the data in a zip file downloaded from GBIF
 }
 \examples{
 \dontrun{
-data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "/tmp", page_title = "GBIF Dataset 1")
+data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "tmp", page_title = "GBIF Dataset 1")
 }
 }
