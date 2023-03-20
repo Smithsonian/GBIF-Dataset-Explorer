@@ -22,14 +22,15 @@
 #' @importFrom httr content
 #' @importFrom data.table fread
 #' @importFrom data.table setnames
+#' @importFrom utils unzip
 #' 
 #' @examples
 #' \dontrun{
-#' data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "/tmp", page_title = "GBIF Dataset 1")
+#' data_loaded <- load_gbif_dwc(zipfile = "####.zip", tmpdir = "tmp", page_title = "GBIF Dataset 1")
 #' }
 
 
-load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, page_title = "GBIF Data"){
+load_gbif_dwc <- function(zipfile = NA, tmpdir = "tmp", page_title = "GBIF Data"){
   
   if (is.na(zipfile) || file.exists(zipfile) == FALSE){
     stop("zipfile was not set")
@@ -43,19 +44,22 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, page_title = "GBIF Data"){
     unlink("gbif.sqlite3")
   }
   
+  if (is.na(tmpdir)){
+    cat("\n\n tmpdir not set, creating tmp")
+    dir.create("tmp")
+  }
+  
+  if (isDirectory(tmpdir) == FALSE){
+    cat("\n\n tmpdir does not exists, creating tmp")
+    dir.create("tmp")
+  }
+  
   gbif_db <- dbConnect(RSQLite::SQLite(), "gbif.sqlite3")
   
   #Save title
   n <- RSQLite::dbExecute(gbif_db, paste0("CREATE TABLE metadata(id, data)"))
   n <- RSQLite::dbExecute(gbif_db, paste0("INSERT INTO metadata (id, data) VALUES ('title', '", page_title, "');"))
   
-  if (is.na(tmpdir)){
-    stop("tmpdir not set")
-  }
-  
-  if (isDirectory(tmpdir) == FALSE){
-    stop("tmpdir does not exists")
-  }
   
   occ_file <- paste0(tmpdir, "/occurrence.txt")
   ver_file <- paste0(tmpdir, "/verbatim.txt")
@@ -66,8 +70,8 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, page_title = "GBIF Data"){
   
   #Extract file in the command line
   cat("\n Extracting files from zip...\n  Please wait...\n")
-  system2("unzip", args = c("-u", "-o", "-d", tmpdir, zipfile))
-  
+  #system2("unzip", args = c("-u", "-o", "-d", tmpdir, zipfile))
+  unzip(zipfile, exdir = tmpdir, overwrite = TRUE)
   
   #Occurrence table----
   occ_cols <- data.table::fread(input = occ_file, header = FALSE, sep = "\t", stringsAsFactors = FALSE, encoding = "UTF-8", quote = "", nrows = 1)
@@ -300,5 +304,5 @@ load_gbif_dwc <- function(zipfile = NA, tmpdir = NA, page_title = "GBIF Data"){
   system2("rm", args = c(paste0(tmpdir, "/*.xml")))
   system2("rm", args = c("-r", paste0(tmpdir, "/dataset")))
   
-  cat("\n Done! The database is ready.\n\n")
+  cat("\n Done! The database is ready.\n\n Launch using launchApp()\n\n")
 }

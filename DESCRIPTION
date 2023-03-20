@@ -1,7 +1,7 @@
 Package: gde
 Title: GBIF Dataset Explorer
-Version: 0.2.0
-Date: 2021-11-23
+Version: 0.2.1
+Date: 2023-03-20
 Authors@R: c(person("Luis J", "Villanueva", email = "villanueval@si.edu",
                   role = c("aut", "cre"))
                   )
@@ -12,4 +12,4 @@ Depends: R(>= 4.0.0), leaflet, shiny, ggplot2, RSQLite
 License: Apache License (>= 2.0)
 URL: https://github.com/Smithsonian/GBIF-Dataset-Explorer
 BugReports: https://github.com/Smithsonian/GBIF-Dataset-Explorer/issues
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3

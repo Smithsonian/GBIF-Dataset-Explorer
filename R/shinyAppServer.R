@@ -620,11 +620,11 @@ description = c(
          <p>Occurrence records in GBIF can be tagged with a number of issues that their system has detected. However, like the 
          <a href=\"https://www.gbif.org/article/5i3CQEZ6DuWiycgMaaakCo/gbif-infrastructure-data-processing\" target = _blank>
          processing information page</a> indicates:</p>
-         <pre>Not all issues indicate bad data. Some are merley flagging the fact that GBIF has altered values during processing.</pre>
+         <ul><li><em>Not all issues indicate bad data. Some are merley flagging the fact that GBIF has altered values during processing.</em></li></ul>
          <p>This tool allows collection and data managers, as well as researchers, to explore issues in GBIF Darwin Core Archive downloads in an easy web-based interface. To load a DarwinCore download to the database:</p>
          <ul>
          <li>Download the zip archive</li>
-         <li>Run <em>load_gbif_dwc(\"zipfile.zip\", \"tmp_folder\", \"Title of the page\")</em></li>
+         <li>Run <em>load_gbif_dwc(\"zipfile.zip\")</em></li>
          <li>Wait for the database to be created</li>
          <li>Run the app using: <em>launchApp()</em></li>
          </ul>

@@ -1,7 +1,15 @@
-Changes in gde 0.1.4
+Changes in gde 0.2.0
 =======================
- - New package, formatted to R package standards and CRAN
+ - Changed unzip to unzip() function to allow the package to work in Windows. 
+ - Added instructions at the end of load_gbif_dwc().
+ - Added defaults to function load_gbif_dwc().
+ - Shiny app launches in browser by default.
 
 Changes in gde 0.2.0
 =======================
- - Chaged database to SQLite to reduce dependencies
+ - Chaged database to SQLite to reduce dependencies.
+
+Changes in gde 0.1.4
+=======================
+ - New package, formatted to R package standards and CRAN.
+
