@@ -12,6 +12,8 @@ Once a DwC dataset is loaded, you can explore the issues and data values using a
 1. Download a DarwinCore zip file from GBIF
 1. Run the function `gde::load_gbif_dwc(zipfile = "000000.zip", tmpdir = "tmp")`, editing the arguments as needed
 
+This step might take a while, depending on the size of the download and the specs of your computer.
+
 ## Run the app locally
 
 After loading the data to the database, run the Shiny app using:
